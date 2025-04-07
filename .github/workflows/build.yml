@@ -18,11 +18,11 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Create apt cache timestamp
+    - name: 📅 Create apt cache timestamp
       id: apt-cache-timestamp
       run: echo "timestamp=$(date -u +%Y%m%d)" >> $GITHUB_OUTPUT
 
-    - name: Cache apt packages
+    - name: 📦 Cache apt packages
       id: cache-apt
       uses: actions/cache@v3
       with:
@@ -35,14 +35,14 @@ jobs:
           apt-${{ steps.apt-cache-timestamp.outputs.timestamp }}-
           apt-
 
-    - name: Install dependencies
+    - name: 🔧 Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install --no-install-recommends -y build-essential cmake ninja-build pkg-config \
           libwayland-dev wayland-protocols libwlroots-dev \
           libpng-dev libsystemd-dev
 
-    - name: Cache CMake build directory
+    - name: 💾 Cache CMake build directory
       id: cache-build
       uses: actions/cache@v3
       with:
@@ -51,7 +51,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cmake-${{ matrix.build_type }}-
 
-    - name: Configure CMake
+    - name: 🔄 Configure CMake
       run: |
         mkdir -p build_${{ matrix.build_type }}
         cd build_${{ matrix.build_type }}
@@ -60,12 +60,12 @@ jobs:
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
           ..
 
-    - name: Build
+    - name: 🚀 Build
       run: |
         cd build_${{ matrix.build_type }}
         ninja
 
-    - name: Upload artifacts
+    - name: 📸 Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: knipser-${{ matrix.build_type }}
