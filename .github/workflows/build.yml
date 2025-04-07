@@ -26,7 +26,10 @@ jobs:
       id: cache-apt
       uses: actions/cache@v3
       with:
-        path: /var/cache/apt/archives
+        path: |
+          /var/cache/apt/archives/*.deb
+          !/var/cache/apt/archives/partial/**
+          !/var/cache/apt/archives/lock
         key: apt-${{ steps.apt-cache-timestamp.outputs.timestamp }}-${{ hashFiles('.github/workflows/build.yml') }}
         restore-keys: |
           apt-${{ steps.apt-cache-timestamp.outputs.timestamp }}-
