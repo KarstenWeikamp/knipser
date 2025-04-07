@@ -1,0 +1,72 @@
+name: Build Knipser
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Create apt cache timestamp
+      id: apt-cache-timestamp
+      run: echo "timestamp=$(date -u +%Y%m%d)" >> $GITHUB_OUTPUT
+
+    - name: Cache apt packages
+      id: cache-apt
+      uses: actions/cache@v3
+      with:
+        path: /var/cache/apt/archives
+        key: apt-${{ steps.apt-cache-timestamp.outputs.timestamp }}-${{ hashFiles('.github/workflows/build.yml') }}
+        restore-keys: |
+          apt-${{ steps.apt-cache-timestamp.outputs.timestamp }}-
+          apt-
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install --no-install-recommends -y build-essential cmake ninja-build pkg-config \
+          libwayland-dev wayland-protocols libwlroots-dev \
+          libpng-dev libsystemd-dev
+
+    - name: Cache CMake build directory
+      id: cache-build
+      uses: actions/cache@v3
+      with:
+        path: build_${{ matrix.build_type }}
+        key: ${{ runner.os }}-cmake-${{ matrix.build_type }}-${{ hashFiles('CMakeLists.txt', 'src/**/*.cpp', 'src/**/*.hpp', 'protocols/**') }}
+        restore-keys: |
+          ${{ runner.os }}-cmake-${{ matrix.build_type }}-
+
+    - name: Configure CMake
+      run: |
+        mkdir -p build_${{ matrix.build_type }}
+        cd build_${{ matrix.build_type }}
+        cmake -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          ..
+
+    - name: Build
+      run: |
+        cd build_${{ matrix.build_type }}
+        ninja
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: knipser-${{ matrix.build_type }}
+        path: |
+          build_${{ matrix.build_type }}/knipser
+          build_${{ matrix.build_type }}/compile_commands.json
+        if-no-files-found: error
