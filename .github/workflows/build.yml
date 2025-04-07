@@ -63,7 +63,7 @@ jobs:
         ninja
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: knipser-${{ matrix.build_type }}
         path: |
