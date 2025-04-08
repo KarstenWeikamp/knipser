@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/karstenweikamp/knipser-builder:latest
     strategy:
       matrix:
         build_type: [Debug, Release]
@@ -18,38 +20,14 @@ jobs:
       with:
         submodules: recursive
 
-    - name: 📅 Create apt cache timestamp
-      id: apt-cache-timestamp
-      run: echo "timestamp=$(date -u +%Y%m%d)" >> $GITHUB_OUTPUT
-
-    - name: 📦 Cache apt packages
-      id: cache-apt
-      uses: actions/cache@v3
-      with:
-        path: |
-          /var/cache/apt/archives/*.deb
-          !/var/cache/apt/archives/partial/**
-          !/var/cache/apt/archives/lock
-        key: apt-${{ steps.apt-cache-timestamp.outputs.timestamp }}-${{ hashFiles('.github/workflows/build.yml') }}
-        restore-keys: |
-          apt-${{ steps.apt-cache-timestamp.outputs.timestamp }}-
-          apt-
-
-    - name: 🔧 Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install --no-install-recommends -y build-essential cmake ninja-build pkg-config \
-          libwayland-dev wayland-protocols libwlroots-dev \
-          libpng-dev libsystemd-dev
-
     - name: 💾 Cache CMake build directory
       id: cache-build
       uses: actions/cache@v3
       with:
         path: build_${{ matrix.build_type }}
-        key: ${{ runner.os }}-cmake-${{ matrix.build_type }}-${{ hashFiles('CMakeLists.txt', 'src/**/*.cpp', 'src/**/*.hpp', 'protocols/**') }}
+        key: ${{ runner.os }}-docker-cmake-${{ matrix.build_type }}-${{ hashFiles('CMakeLists.txt', '**/*.c', '**/*.h', 'wayland-protocols/*.xml') }}
         restore-keys: |
-          ${{ runner.os }}-cmake-${{ matrix.build_type }}-
+          ${{ runner.os }}-docker-cmake-${{ matrix.build_type }}-
 
     - name: 🔄 Configure CMake
       run: |
