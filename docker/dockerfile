@@ -1,0 +1,41 @@
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  build-essential \
+  cmake \
+  ninja-build \
+  pkg-config \
+  git \
+  ca-certificates \
+  libwayland-dev \
+  wayland-protocols \
+  libwlroots-dev \
+  libpng-dev \
+  libsystemd-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -ms /bin/bash builder
+USER builder
+
+WORKDIR /workspace26s
+Run actions/checkout@v3
+/usr/bin/docker exec  00d16ea356bb49564fe9be28d5db5d4cf510dbb7de9960fa71a9d44aa667cc15 sh -c "cat /etc/*release | grep ^ID"
+Syncing repository: KarstenWeikamp/knipser
+Getting Git version info
+Temporarily overriding HOME='/__w/_temp/1bf33784-05f0-4d4f-b4a2-4b82d0c052cc' before making global git config changes
+Adding repository directory to the temporary git global config as a safe directory
+/usr/bin/git config --global --add safe.directory /__w/knipser/knipser
+Deleting the contents of '/__w/knipser/knipser'
+Initializing the repository
+Disabling automatic garbage collection
+Setting up auth
+Fetching the repository
+  /usr/bin/git -c protocol.version=2 fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin +e80122f6b7bc7ccc35d2460a2197aff76157a3da:refs/remotes/pull/2/merge
+  Error: fatal: unable to access 'https://github.com/KarstenWeikamp/knipser/': server certificate verification failed. CAfile: none CRLfile: none
+  The process '/usr/bin/git' failed with exit code 128
+  Waiting 11 seconds before trying again
+  /usr/bin/git -c protocol.version=2 fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin +e80122f6b7bc7ccc35d2460a2197aff76157a3da:refs/remotes/pull/2/merge
+  Error: fatal: unable to access 'https://github.com/KarstenWeikamp/knipser/': server certificate verification failed. CAfile: none CRLfile: none
+  The process '/usr/bin/git' failed with exit code 128
+  Waiting 20 seconds before trying again
+  Error: The operation was canceled.

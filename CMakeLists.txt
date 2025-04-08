@@ -14,10 +14,6 @@ set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
 # Find the wayland-scanner executable
 find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
 
-# Define where to find the protocol XML file
-set(PROTOCOL_DIR "/usr/share/wayland-protocols" CACHE PATH "Wayland protocols directory")
-set(WLR_PROTOCOL_DIR "/usr/share/wlr-protocols" CACHE PATH "wlr-protocols directory")
-
 # Function to generate protocol files
 function(generate_protocol PROTOCOL_NAME PROTOCOL_XML_PATH)
     set(PROTO_H_FILE "${CMAKE_CURRENT_SOURCE_DIR}/wayland-protocols/${PROTOCOL_NAME}-client-protocol.h")
