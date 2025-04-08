@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/karstenweikamp/knipser-builder:latest
-    credentials:
+      credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GHCR_PAT }}
     strategy:
