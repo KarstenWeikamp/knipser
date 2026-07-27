@@ -11,6 +11,21 @@ static sd_bus_slot *dbusSlot = NULL;
 static sd_bus *dbusConnection = NULL;
 
 // Callback for context menu activation
+int on_activate(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
+{
+	int x, y;
+	int ret = sd_bus_message_read(m, "ii", &x, &y);
+	if (ret < 0) {
+		fprintf(stderr, "Failed to parse Activate arguments: %s\n",
+			strerror(-ret));
+		return ret;
+	}
+	printf("Activate (left click) in (%d,%d): %s\n", x, y, get_display_name_for_coordinates(x,y));
+	knipser_handle_screenshot(x, y);
+
+	return sd_bus_reply_method_return(m, "");
+}
+
 int on_context_menu(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
 {
 	int x, y;
@@ -20,8 +35,8 @@ int on_context_menu(sd_bus_message *m, void *userdata, sd_bus_error *ret_error)
 			strerror(-ret));
 		return ret;
 	}
-	printf("Display in (%d,%d): %s", x, y, get_display_name_for_coordinates(x,y));
-	knipser_handle_screenshot(x, y);
+	printf("ContextMenu (right click) in (%d,%d): %s\n", x, y, get_display_name_for_coordinates(x,y));
+	show_tray_menu(x, y);
 
 	return sd_bus_reply_method_return(m, "");
 }
@@ -41,6 +56,8 @@ int get_property(sd_bus *bus, const char *path, const char *interface,
 		return sd_bus_message_append(reply, "s", "Active");
 	} else if (strcmp(property, "IconName") == 0) {
 		return sd_bus_message_append(reply, "s", "camera-photo");
+	} else if (strcmp(property, "ItemIsMenu") == 0) {
+		return sd_bus_message_append(reply, "b", 0); // false
 	}
 
 	return -1; // Unknown property
@@ -58,7 +75,11 @@ const sd_bus_vtable tray_vtable[] = {
 			SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
 	SD_BUS_PROPERTY("IconName", "s", get_property, 0,
 			SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
+	SD_BUS_PROPERTY("ItemIsMenu", "b", get_property, 0,
+			SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
 	SD_BUS_METHOD("ContextMenu", "ii", "", on_context_menu,
+		      SD_BUS_VTABLE_UNPRIVILEGED),
+	SD_BUS_METHOD("Activate", "ii", "", on_activate,
 		      SD_BUS_VTABLE_UNPRIVILEGED),
 	SD_BUS_VTABLE_END
 };

@@ -7,6 +7,16 @@ project(knipser VERSION 1.0)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED True)
 
+# Set default build type if none was specified
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to 'Release' as none was specified.")
+  set(CMAKE_BUILD_TYPE "Release" CACHE
+      STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
 # Set build type flags
 set(CMAKE_C_FLAGS_DEBUG "-g -O0")
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
@@ -14,8 +24,8 @@ set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
 # Find the wayland-scanner executable
 find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
 
-# Function to generate protocol files
-function(generate_protocol PROTOCOL_NAME PROTOCOL_XML_PATH)
+# Macro to generate protocol files
+macro(generate_protocol PROTOCOL_NAME PROTOCOL_XML_PATH)
     set(PROTO_H_FILE "${CMAKE_CURRENT_SOURCE_DIR}/wayland-protocols/${PROTOCOL_NAME}-client-protocol.h")
     set(PROTO_C_FILE "${CMAKE_CURRENT_SOURCE_DIR}/wayland-protocols/${PROTOCOL_NAME}-client-protocol.c")
 
@@ -40,15 +50,19 @@ function(generate_protocol PROTOCOL_NAME PROTOCOL_XML_PATH)
     )
 
     # Add to global lists
-    set(PROTOCOL_HEADERS ${PROTOCOL_HEADERS} "${PROTO_H_FILE}" PARENT_SCOPE)
-    set(PROTOCOL_SOURCES ${PROTOCOL_SOURCES} "${PROTO_C_FILE}" PARENT_SCOPE)
-endfunction()
+    list(APPEND PROTOCOL_HEADERS "${PROTO_H_FILE}")
+    list(APPEND PROTOCOL_SOURCES "${PROTO_C_FILE}")
+endmacro()
 
 # Initialize protocol lists
 set(PROTOCOL_HEADERS "")
 set(PROTOCOL_SOURCES "")
 
 # Generate protocol files
+generate_protocol(
+    "xdg-shell"
+    "${CMAKE_CURRENT_SOURCE_DIR}/wayland-protocols/xdg-shell.xml"
+)
 generate_protocol(
     "wlr-screencopy-unstable-v1"
     "${CMAKE_CURRENT_SOURCE_DIR}/wayland-protocols/wlr-screencopy-unstable-v1.xml"
@@ -57,6 +71,11 @@ generate_protocol(
 generate_protocol(
     "wlr-output-management-unstable-v1"
     "${CMAKE_CURRENT_SOURCE_DIR}/wayland-protocols/wlr-output-management-unstable-v1.xml"
+)
+
+generate_protocol(
+    "wlr-layer-shell-unstable-v1"
+    "${CMAKE_CURRENT_SOURCE_DIR}/wayland-protocols/wlr-layer-shell-unstable-v1.xml"
 )
 
 # Make sure the include directory is in the include path
@@ -85,11 +104,19 @@ add_dependencies(knipser wayland-protocols-headers)
 # Include Wayland libraries
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(WAYLAND REQUIRED wayland-client)
+pkg_check_modules(CAIRO REQUIRED cairo)
 
 # Link Wayland libraries
-target_include_directories(knipser PRIVATE ${WAYLAND_INCLUDE_DIRS})
-target_link_libraries(knipser PRIVATE systemd ${WAYLAND_LIBRARIES})
-target_compile_options(knipser PRIVATE ${WAYLAND_CFLAGS_OTHER})
+target_include_directories(knipser PRIVATE ${WAYLAND_INCLUDE_DIRS} ${CAIRO_INCLUDE_DIRS})
+target_link_libraries(knipser PRIVATE systemd ${WAYLAND_LIBRARIES} ${CAIRO_LIBRARIES})
+target_compile_options(knipser PRIVATE ${WAYLAND_CFLAGS_OTHER} ${CAIRO_CFLAGS_OTHER})
 
 find_package(PNG REQUIRED)
 target_link_libraries(knipser PRIVATE PNG::PNG)
+
+# Testing
+enable_testing()
+add_executable(test_knipser tests/test_knipser.c)
+target_include_directories(test_knipser PRIVATE ${CMAKE_BINARY_DIR})
+target_link_libraries(test_knipser PRIVATE ${WAYLAND_LIBRARIES} ${CAIRO_LIBRARIES} PNG::PNG)
+add_test(NAME knipser_test COMMAND test_knipser)

@@ -2,11 +2,12 @@
 
 #include "wayland.h"
 #include "tray.h"
-
+#include "knipser.h"
 
 int main(int argc, char *argv[])
 {
 	int ret = 0;
+	load_config();
 	init_wayland();
 
 	ret = init_tray();
