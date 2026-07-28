@@ -9,11 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/karstenweikamp/knipser-builder:latest
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       matrix:
         build_type: [Debug, Release]
@@ -22,6 +17,11 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wayland-protocols libwayland-dev libcairo2-dev libpng-dev pkg-config cmake ninja-build
 
     - name: 💾 Cache CMake build directory
       id: cache-build
